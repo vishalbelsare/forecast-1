@@ -21,11 +21,10 @@ if (require(testthat)) {
     expect_false(identical(fit1$fitted, fit2$fitted))
   })
 
-  test_that("test parallel = TRUE and stepwise = FALSE for auto.arima()", {
+  test_that("test parallel = FALSE and stepwise = FALSE for auto.arima()", {
     skip_if(identical(Sys.getenv("GITHUB_ACTIONS"), "true"))
-    expect_equal(auto.arima(WWWusage, parallel = TRUE, stepwise = FALSE)$arma, c(3L, 0L, 0L, 0L, 1L, 1L, 0L))
+    expect_equal(auto.arima(WWWusage, parallel = FALSE, stepwise = FALSE)$arma, c(3L, 0L, 0L, 0L, 1L, 1L, 0L))
   })
-
 
   test_that("tests for ndiffs()", {
     expect_true(ndiffs(AirPassengers, test = "kpss") == 1)

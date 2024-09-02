@@ -34,7 +34,7 @@
 #' of \code{nsim} is set to the number of rows of \code{xreg} if it is not
 #' \code{NULL}.
 #' @param ... Other arguments, not currently used.
-#' @inheritParams forecast
+#' @inheritParams forecast.ts
 #'
 #' @return An object of class "\code{ts}".
 #' @author Rob J Hyndman
@@ -128,7 +128,6 @@ simulate.ets <- function(object, nsim = length(object$x), seed = NULL, future = 
   }
   return(tmp)
 }
-
 
 # Simulate ARIMA model starting with observed data x
 # Some of this function is borrowed from the arima.sim() function in the stats package.
@@ -244,7 +243,6 @@ myarima.sim <- function(model, n, x, e, ...) {
   if ((n.start > 0) && (flag.noadjust == FALSE)) {
     x <- x[-(1:n.start)]
   }
-
 
   ######## Undo all differences
 
@@ -469,7 +467,6 @@ simulate.Arima <- function(object, nsim = length(object$x), seed = NULL, xreg = 
   if (!is.null(lambda)) {
     sim <- InvBoxCox(sim, lambda)
   }
-
 
   return(sim)
 }
@@ -753,7 +750,6 @@ simulate.nnetar <- function(object, nsim = length(object$x), seed = NULL, xreg =
   }
   return(path)
 }
-
 
 #' @rdname simulate.ets
 #' @export

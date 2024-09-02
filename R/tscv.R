@@ -100,7 +100,7 @@ tsCV <- function(y, forecastfunction, h=1, window=NULL, xreg=NULL, initial=0, ..
         start = i+1,
         end = i+h)
       fc <- try(suppressWarnings(
-        forecastfunction(y_subset, h = h, xreg = xreg_subset, newxreg=xreg_future)
+        forecastfunction(y_subset, h = h, xreg = xreg_subset, newxreg=xreg_future, ...)
         ), silent = TRUE)
     }
     if (!is.element("try-error", class(fc))) {
@@ -118,7 +118,6 @@ tsCV <- function(y, forecastfunction, h=1, window=NULL, xreg=NULL, initial=0, ..
 # Cross-validation for AR models
 # By Gabriel Caceres
 ## Note arguments to pass must be named
-
 
 #' k-fold Cross-Validation applied to an autoregressive model
 #'

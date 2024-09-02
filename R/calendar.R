@@ -3,7 +3,6 @@
 as.Date.timeDate <- timeDate::as.Date.timeDate
 
 
-
 #' Number of trading days in each season
 #'
 #' Returns number of trading days in each month or quarter of the observed time
@@ -24,7 +23,7 @@ as.Date.timeDate <- timeDate::as.Date.timeDate
 #' bizdays(x, FinCenter = "New York")
 #' @export
 bizdays <- function(x, FinCenter = c(
-                      "New York", "London", "NERC", "Tokyo",
+                      "New York", "London", "NERC", "Toronto",
                       "Zurich"
                     )) {
   # Return the number of trading days corresponding to the input ts
@@ -49,7 +48,7 @@ bizdays <- function(x, FinCenter = c(
     holidays <- timeDate::holidayLONDON(years)
   } else if (FinCenter == "NERC") {
     holidays <- timeDate::holidayNERC(years)
-  } else if (FinCenter == "Tokyo") {
+  } else if (FinCenter == "Toronto") {
     holidays <- timeDate::holidayTSX(years)
   } else if (FinCenter == "Zurich") {
     holidays <- timeDate::holidayZURICH(years)
@@ -83,7 +82,6 @@ bizdays <- function(x, FinCenter = c(
   out <- ts(num.days, start = tsp(x)[1L], frequency = freq)
   return(out)
 }
-
 
 
 #' Easter holidays in each season

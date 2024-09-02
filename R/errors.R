@@ -101,7 +101,6 @@ testaccuracy <- function(f, x, test, d, D) {
   return(out)
 }
 
-
 trainingaccuracy <- function(f, test, d, D) {
   # Make sure x is an element of f when f is a fitted model rather than a forecast
   # if(!is.list(f))
@@ -175,7 +174,6 @@ trainingaccuracy <- function(f, test, d, D) {
 }
 
 
-
 #' Accuracy measures for a forecast model
 #'
 #' Returns range of summary measures of the forecast accuracy. If \code{x} is
@@ -225,7 +223,9 @@ trainingaccuracy <- function(f, test, d, D) {
 #' @author Rob J Hyndman
 #' @references Hyndman, R.J. and Koehler, A.B. (2006) "Another look at measures
 #' of forecast accuracy". \emph{International Journal of Forecasting},
-#' \bold{22}(4), 679-688. Hyndman, R.J. and Athanasopoulos, G. (2018)
+#' \bold{22}(4), 679-688.
+#'
+#' Hyndman, R.J. and Athanasopoulos, G. (2018)
 #' "Forecasting: principles and practice", 2nd ed., OTexts, Melbourne, Australia.
 #' Section 3.4 "Evaluating forecast accuracy".
 #' \url{https://otexts.com/fpp2/accuracy.html}.
@@ -241,13 +241,6 @@ trainingaccuracy <- function(f, test, d, D) {
 #' plot(fit1)
 #' lines(EuStockMarkets[1:300, 1])
 #' @export
-accuracy <- function(object, ...) {
-  UseMethod("accuracy")
-}
-
-#' @rdname accuracy
-#' @method accuracy default
-#' @export
 accuracy.default <- function(object, x, test = NULL, d = NULL, D = NULL, f = NULL, ...) {
   if (!is.null(f)) {
     warning("Using `f` as the argument for `accuracy()` is deprecated. Please use `object` instead.")
@@ -257,7 +250,7 @@ accuracy.default <- function(object, x, test = NULL, d = NULL, D = NULL, f = NUL
     "ARFIMA", "mforecast", "forecast", "ts", "integer", "numeric",
     "Arima", "ets", "lm", "bats", "tbats", "nnetar", "stlm", "baggedModel"
   )))) {
-    stop("First argument should be a forecast object or a time series.")
+    stop(paste("No accuracy method found for an object of class",class(object)))
   }
   if (is.element("mforecast", class(object))) {
     return(accuracy.mforecast(object, x, test, d, D))
@@ -293,7 +286,6 @@ accuracy.default <- function(object, x, test = NULL, d = NULL, D = NULL, f = NUL
       D <- as.numeric(frequency(object) > 1)
     }
   }
-
 
   if (trainset) {
     trainout <- trainingaccuracy(object, test, d, D)

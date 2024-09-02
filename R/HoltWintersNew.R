@@ -93,7 +93,8 @@ HoltWintersZZ <- function(x,
   ## initialise smoothing parameter
   optim.start <- initparam(
     alpha = alpha, beta = beta, gamma = gamma, phi = 1,
-    trendtype = trendtype, seasontype = seasontype, damped = FALSE, lower = lower, upper = upper, m = m
+    trendtype = trendtype, seasontype = seasontype, damped = FALSE, lower = lower, upper = upper, m = m,
+    bounds = "usual"
   )
 
   # if(!is.na(optim.start["alpha"]))
@@ -271,6 +272,13 @@ zzhw <- function(x, lenx, alpha=NULL, beta=NULL, gamma=NULL, seasonal="additive"
     phi <- 1
   }
 
+  if(abs(m - round(m)) > 1e-4) {
+    # Ignore seasonality
+    m <- 1
+  } else {
+    m <- round(m)
+  }
+
   # initialise array of l, b, s
   level <- trend <- season <- xfit <- residuals <- numeric(lenx)
   SSE <- 0
@@ -411,7 +419,7 @@ zzhw <- function(x, lenx, alpha=NULL, beta=NULL, gamma=NULL, seasonal="additive"
 #' it will be estimated.
 #' @param x Deprecated. Included for backwards compatibility.
 #' @param ... Other arguments passed to \code{forecast.ets}.
-#' @inheritParams forecast
+#' @inheritParams forecast.ts
 #'
 #' @return An object of class "\code{forecast}".
 #'

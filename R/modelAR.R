@@ -3,7 +3,6 @@
 # For seasonal data, p chosen using AIC from linear AR(p) model after
 #    seasonally adjusting with STL decomposition, and P=1
 
-
 #' Time Series Forecasts with a user-defined model
 #'
 #' Experimental function to forecast univariate time series with a
@@ -49,7 +48,7 @@
 #' @param x Deprecated. Included for backwards compatibility.
 #' @param \dots Other arguments passed to \code{FUN} for
 #' \code{modelAR}.
-#' @inheritParams forecast
+#' @inheritParams forecast.ts
 #'
 #' @return Returns an object of class "\code{modelAR}".
 #'
@@ -309,7 +308,6 @@ modelAR <- function(y, p, P=1, FUN, predict.FUN, xreg=NULL, lambda=NULL, model=N
   return(structure(out, class = c("modelAR")))
 }
 
-
 #' Forecasting using user-defined model
 #'
 #' Returns forecasts and other information for user-defined
@@ -341,7 +339,7 @@ modelAR <- function(y, p, P=1, FUN, predict.FUN, xreg=NULL, lambda=NULL, model=N
 #' a matrix with \code{h} rows and \code{npaths} columns (vectors are coerced
 #' into a matrix). If present, \code{bootstrap} is ignored.
 #' @param ... Additional arguments passed to \code{\link{simulate.nnetar}}
-#' @inheritParams forecast
+#' @inheritParams forecast.ts
 #'
 #' @return An object of class "\code{forecast}".
 #'

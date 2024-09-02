@@ -64,7 +64,6 @@ unfracdiff <- function(x, y, n, h, d) {
 ## Automatic ARFIMA modelling
 ## Will return Arima object if d < 0.01 to prevent estimation problems
 
-
 #' Fit a fractionally differenced ARFIMA model
 #'
 #' An ARFIMA(p,d,q) model is selected and estimated automatically using the
@@ -92,7 +91,7 @@ unfracdiff <- function(x, y, n, h, d) {
 #' @param x Deprecated. Included for backwards compatibility.
 #' @param \dots Other arguments passed to \code{\link{auto.arima}} when
 #' selecting p and q.
-#' @inheritParams forecast
+#' @inheritParams forecast.ts
 #'
 #' @return A list object of S3 class \code{"fracdiff"}, which is described in
 #' the \code{\link[fracdiff]{fracdiff}} documentation. A few additional objects

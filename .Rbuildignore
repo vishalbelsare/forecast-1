@@ -16,3 +16,8 @@ revdep_checks.R
 vignettes/*_cache
 ^.github$
 ^\.github$
+^CRAN-SUBMISSION$
+^.vscode$
+^\.vscode$
+^rstudio$
+rstudio

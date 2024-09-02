@@ -1,6 +1,5 @@
 # A unit test for nnetar.R
 if (require(testthat)) {
-  context("Testing nnetar")
   test_that("Tests for nnetar", {
     oilnnet <- nnetar(airmiles, lambda = 0.15)
     woolyrnqnnet <- nnetar(woolyrnq, repeats = 10)
@@ -33,6 +32,27 @@ if (require(testthat)) {
       fixed = TRUE
     )
     expect_true(uscnnet$size == 3)
+    # Test default size for models with only seasonal lags, with and without xreg
+    seasonal_only_lags_nnet <- nnetar(woolyrnq,p = 0,P = 3)
+    expect_output(
+      print(seasonal_only_lags_nnet),regexp = "NNAR(0,3,2)",
+      fixed = TRUE
+    )
+    expect_output(
+      print(seasonal_only_lags_nnet),regexp = "3-2-1 network",
+      fixed = TRUE
+    )
+
+    seasonal_only_lags_xreg_nnet <- nnetar(woolyrnq,p = 0,P = 3,xreg = cbind(1:119,119:1))
+    expect_output(
+      print(seasonal_only_lags_xreg_nnet),regexp = "NNAR(0,3,3)",
+      fixed = TRUE
+    )
+    expect_output(
+      print(seasonal_only_lags_xreg_nnet),regexp = "5-3-1 network",
+      fixed = TRUE
+    )
+
     # Test P=0 when m>1
     uscnnet <- nnetar(woolyrnq, p = 4, P = 0)
     expect_true(uscnnet$size == 2)
@@ -48,16 +68,26 @@ if (require(testthat)) {
       print(uscnnet), regexp = "5-3-1 network",
       fixed = TRUE
     )
+    # Test that p = 0 & P = 0 is not permitted
+    expect_error(
+      nnetar(woolyrnq,p = 0,P = 0)
+    )
     # Test with multiple-column xreg
     creditnnet <- nnetar(
       wineind,
       xreg = cbind(bizdays(wineind), fourier(wineind, 1))
     )
-    expect_warning(forecast(creditnnet, h = 2, xreg = matrix(2, 2, 3))$mean, "different column names") %>% 
-      expect_length(2L)
+    expect_warning(
+      expect_length(forecast(creditnnet, h = 2, xreg = matrix(2, 2, 3))$mean, 2L),
+      "different column names",
+      fixed = TRUE
+    )
     # Test if h doesn't match xreg
-    expect_warning(forecast(creditnnet, h = 5, xreg = matrix(2, 2, 3))$mean, "different column names") %>% 
-      expect_length(2L)
+    expect_warning(
+      expect_length(forecast(creditnnet, h = 5, xreg = matrix(2, 2, 3))$mean, 2L),
+      "different column names",
+      fixed = TRUE
+    )
     # Test that P is ignored if m=1
     expect_warning(creditnnet <- nnetar(WWWusage, p = 2, P = 4, xreg = 1:length(WWWusage)))
     expect_output(

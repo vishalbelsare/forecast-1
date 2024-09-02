@@ -7,7 +7,6 @@
 # Argument lambda allows for Box-Cox transformation
 
 
-
 #' Interpolate missing values in a time series
 #'
 #' By default, uses linear interpolation for non-seasonal series. For seasonal series, a
@@ -19,7 +18,7 @@
 #'
 #' @param x time series
 #' @param linear Should a linear interpolation be used.
-#' @inheritParams forecast
+#' @inheritParams forecast.ts
 #' @return Time series
 #' @author Rob J Hyndman
 #' @seealso \code{\link[forecast]{tsoutliers}}
@@ -115,7 +114,6 @@ na.interp <- function(x, lambda=NULL,
 # Missing values replaced as well if replace.missing=TRUE
 
 
-
 #' Identify and replace outliers and missing values in a time series
 #'
 #' Uses supsmu for non-seasonal series and a robust STL decomposition for
@@ -126,10 +124,10 @@ na.interp <- function(x, lambda=NULL,
 #' @param replace.missing If TRUE, it not only replaces outliers, but also
 #' interpolates missing values
 #' @param iterate the number of iterations required
-#' @inheritParams forecast
+#' @inheritParams forecast.ts
 #' @return Time series
 #' @author Rob J Hyndman
-#' @references Hyndman (2021) "Detecting time series outliers" \url{https://robjhyndman.com/hyndsight/tsoutliers}.
+#' @references Hyndman (2021) "Detecting time series outliers" \url{https://robjhyndman.com/hyndsight/tsoutliers/}.
 #' @seealso \code{\link[forecast]{na.interp}},
 #' \code{\link[forecast]{tsoutliers}}, \code{\link[stats]{supsmu}}
 #' @keywords ts
@@ -149,7 +147,6 @@ tsclean <- function(x, replace.missing=TRUE, iterate=2, lambda = NULL) {
 
 # Function to identify time series outlieres
 
-
 #' Identify and replace outliers in a time series
 #'
 #' Uses supsmu for non-seasonal series and a periodic stl decomposition with
@@ -158,12 +155,12 @@ tsclean <- function(x, replace.missing=TRUE, iterate=2, lambda = NULL) {
 #'
 #' @param x time series
 #' @param iterate the number of iterations required
-#' @inheritParams forecast
+#' @inheritParams forecast.ts
 #' @return \item{index}{Indicating the index of outlier(s)}
 #' \item{replacement}{Suggested numeric values to replace identified outliers}
 #' @author Rob J Hyndman
 #' @seealso \code{\link[forecast]{na.interp}}, \code{\link[forecast]{tsclean}}
-#' @references Hyndman (2021) "Detecting time series outliers" \url{https://robjhyndman.com/hyndsight/tsoutliers}.
+#' @references Hyndman (2021) "Detecting time series outliers" \url{https://robjhyndman.com/hyndsight/tsoutliers/}.
 #' @keywords ts
 #' @examples
 #'

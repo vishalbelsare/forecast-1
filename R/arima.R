@@ -65,7 +65,7 @@ search.arima <- function(x, d=NA, D=NA, max.p=5, max.q=5,
       num.cores <- detectCores()
     }
 
-    all.models <- mclapply(X = to.check, FUN = par.all.arima, max.order=max.order)
+    all.models <- mclapply(X = to.check, FUN = par.all.arima, max.order=max.order, mc.cores = num.cores)
 
     # Removing null elements
     all.models <- all.models[!sapply(all.models, is.null)]
@@ -204,7 +204,6 @@ SD.test <- function(wts, s=frequency(wts)) {
 }
 
 
-
 #' Forecasting using ARIMA or ARFIMA models
 #'
 #' Returns forecasts and other information for univariate ARIMA models.
@@ -234,7 +233,7 @@ SD.test <- function(wts, s=frequency(wts)) {
 #' @param npaths Number of sample paths used in computing simulated prediction
 #' intervals when \code{bootstrap=TRUE}.
 #' @param ... Other arguments.
-#' @inheritParams forecast
+#' @inheritParams forecast.ts
 #'
 #' @return An object of class "\code{forecast}".
 #'
@@ -546,7 +545,6 @@ arima.errors <- function(object) {
 
 # Return one-step fits
 
-
 #' h-step in-sample forecasts for time series models.
 #'
 #' Returns h-step forecasts for the data used in fitting the model.
@@ -603,7 +601,6 @@ fitted.forecast_ARIMA <- fitted.Arima
 # Also allows refitting to new data
 # and drift terms to be included.
 
-
 #' Fit ARIMA model to univariate time series
 #'
 #' Largely a wrapper for the \code{\link[stats]{arima}} function in the stats
@@ -611,7 +608,15 @@ fitted.forecast_ARIMA <- fitted.Arima
 #' is also possible to take an ARIMA model from a previous call to \code{Arima}
 #' and re-apply it to the data \code{y}.
 #'
-#' See the \code{\link[stats]{arima}} function in the stats package.
+#' The fitted model is a regression with ARIMA(p,d,q) errors
+#'
+#' \deqn{y_t = c + \beta' x_t + z_t}
+#'
+#' where \eqn{x_t} is a vector of regressors at time \eqn{t} and \eqn{z_t} is an
+#' ARMA(p,d,q) error process. If there are no regressors, and \eqn{d=0}, then c
+#' is an estimate of the mean of \eqn{y_t}. For more information, see Hyndman &
+#' Athanasopoulos (2018). For details of the estimation algorithm, see the
+#' \code{\link[stats]{arima}} function in the stats package.
 #'
 #' @aliases print.ARIMA summary.Arima as.character.Arima
 #'
@@ -624,8 +629,8 @@ fitted.forecast_ARIMA <- fitted.Arima
 #' components order and period, but a specification of just a numeric vector of
 #' length 3 will be turned into a suitable list with the specification as the
 #' order.
-#' @param xreg Optionally, a numerical vector or matrix of external regressors, which
-#' must have the same number of rows as y. It should not be a data frame.
+#' @param xreg Optionally, a numerical vector or matrix of external regressors,
+#' which must have the same number of rows as y. It should not be a data frame.
 #' @param include.mean Should the ARIMA model include a mean term? The default
 #' is \code{TRUE} for undifferenced series, \code{FALSE} for differenced ones
 #' (where a mean would not affect the fit nor predictions).
@@ -646,14 +651,16 @@ fitted.forecast_ARIMA <- fitted.Arima
 #' parameters.
 #' @param x Deprecated. Included for backwards compatibility.
 #' @param ... Additional arguments to be passed to \code{\link[stats]{arima}}.
-#' @inheritParams forecast
+#' @inheritParams forecast.ts
 #' @return See the \code{\link[stats]{arima}} function in the stats package.
 #' The additional objects returned are \item{x}{The time series data}
 #' \item{xreg}{The regressors used in fitting (when relevant).}
 #' \item{sigma2}{The bias adjusted MLE of the innovations variance.}
 #'
 #' @export
-#'
+#' @references Hyndman, R.J. and Athanasopoulos, G. (2018)
+#' "Forecasting: principles and practice", 2nd ed., OTexts, Melbourne, Australia.
+#' \url{https://OTexts.com/fpp2/}.
 #' @author Rob J Hyndman
 #' @seealso \code{\link{auto.arima}}, \code{\link{forecast.Arima}}.
 #' @keywords ts
@@ -907,7 +914,6 @@ print.forecast_ARIMA <- function(x, digits=max(3, getOption("digits") - 3), se=T
 
 
 
-
 #' Return the order of an ARIMA or ARFIMA model
 #'
 #' Returns the order of a univariate ARIMA or ARFIMA model.
@@ -967,4 +973,32 @@ is.Arima <- function(x) {
 #' @export
 fitted.ar <- function(object, ...) {
   getResponse(object) - residuals(object)
+}
+
+#' @export
+hfitted.Arima <- function(object, h, ...) {
+  # As implemented in Fable
+  if(h == 1){
+    return(object$fitted)
+  }
+  y <- object$fitted+residuals(object, "innovation")
+  yx <- residuals(object, "regression")
+  # Get fitted model
+  mod <- object$model
+  # Reset model to initial state
+  mod <-  stats::makeARIMA(mod$phi, mod$theta, mod$Delta)
+  # Calculate regression component
+  xm <- y - yx
+  fits <- rep_len(NA_real_, length(y))
+
+  start <- length(mod$Delta) + 1
+  end <- length(yx) - h
+  idx <- if(start > end) integer(0L) else start:end
+  for(i in idx) {
+    fc_mod <- attr(stats::KalmanRun(yx[seq_len(i)], mod, update = TRUE), "mod")
+    fits[i + h] <- stats::KalmanForecast(h, fc_mod)$pred[h] + xm[i+h]
+  }
+  fits <- ts(fits)
+  tsp(fits) <- tsp(object$x)
+  fits
 }

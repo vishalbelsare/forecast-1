@@ -13,7 +13,7 @@
 #' the same value is used for all seasonal components. Otherwise, it should be a vector
 #' of the same length as the number of seasonal components (or longer).
 #' @param ... Other arguments are passed to \code{\link[stats]{stl}}.
-#' @inheritParams forecast
+#' @inheritParams forecast.ts
 #'
 #' @seealso \code{\link[stats]{stl}}, \code{\link[stats]{supsmu}}
 #' @examples
@@ -30,7 +30,7 @@ mstl <- function(x, lambda = NULL, iterate = 2, s.window = 7+4*seq(6), ...) {
     if (any(msts >= n / 2)) {
       warning("Dropping seasonal components with fewer than two full periods.")
       msts <- msts[msts < n / 2]
-      x <- forecast::msts(x, seasonal.periods = msts)
+      x <- msts(x, seasonal.periods = msts)
     }
     msts <- sort(msts, decreasing = FALSE)
   }
@@ -56,7 +56,7 @@ mstl <- function(x, lambda = NULL, iterate = 2, s.window = 7+4*seq(6), ...) {
 
   # Transform if necessary
   if (!is.null(lambda)) {
-    x <- forecast::BoxCox(x, lambda = lambda)
+    x <- BoxCox(x, lambda = lambda)
     lambda <- attr(x, "lambda")
   }
   tt <- seq_len(n)
@@ -210,7 +210,7 @@ autoplot.mstl <- function(object, ...) {
 #' @param x Deprecated. Included for backwards compatibility.
 #' @param ... Other arguments passed to \code{forecast.stl},
 #' \code{modelfunction} or \code{forecastfunction}.
-#' @inheritParams forecast
+#' @inheritParams forecast.ts
 #'
 #' @return \code{stlm} returns an object of class \code{stlm}. The other
 #' functions return objects of class \code{forecast}.
@@ -349,7 +349,6 @@ forecast.mstl <- function(object, method = c("ets", "arima", "naive", "rwdrift")
     biasadj = biasadj, xreg = xreg, newxreg = newxreg, allow.multiplicative.trend = allow.multiplicative.trend, ...
   )
 }
-
 
 # rowSums for mts objects
 #
@@ -506,7 +505,7 @@ forecast.stlm <- function(object, h = 2 * object$m, level = c(80, 95), fan = FAL
   # In-case forecast method uses different horizon length (such as using xregs)
   h <- NROW(fcast$mean)
   # Forecast seasonal series with seasonal naive
-  seasonal.periods <- attributes(object$stl)$seasonal.periods
+  seasonal.periods <- attributes(object$stl)$msts
   if (is.null(seasonal.periods)) {
     seasonal.periods <- frequency(object$stl)
   }

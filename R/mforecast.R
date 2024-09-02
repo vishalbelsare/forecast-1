@@ -32,7 +32,6 @@ mlmsplit <- function(x, index=NULL) {
 }
 
 
-
 #' Forecast a multiple linear model with possible time series components
 #'
 #' \code{forecast.mlm} is used to predict multiple linear models, especially
@@ -58,7 +57,7 @@ mlmsplit <- function(x, index=NULL) {
 #' interpreted as related to the subsequent time periods. If \code{FALSE}, any
 #' time series attributes of the original data will be ignored.
 #' @param ... Other arguments passed to \code{\link[forecast]{forecast.lm}()}.
-#' @inheritParams forecast
+#' @inheritParams forecast.ts
 #'
 #' @return An object of class "\code{mforecast}".
 #'
@@ -135,7 +134,7 @@ forecast.mlm <- function(object, newdata, h=10, level=c(80, 95), fan=FALSE, lamb
 #' multiplicative trends are allowed. Otherwise, only additive or no trend ETS
 #' models are permitted.
 #' @param ... Additional arguments affecting the forecasts produced.
-#' @inheritParams forecast
+#' @inheritParams forecast.ts
 #' @return An object of class "\code{mforecast}".
 #'
 #' The function \code{summary} is used to obtain and print a summary of the
@@ -187,7 +186,6 @@ print.mforecast <- function(x, ...) {
   })
   return(invisible())
 }
-
 
 
 #' Multivariate forecast plot

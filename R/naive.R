@@ -7,6 +7,11 @@ lagwalk <- function(y, lag=1, drift=FALSE, lambda=NULL, biasadj=FALSE) {
   if(!is.ts(y)){
     y <- as.ts(y)
   }
+  dimy <- dim(y)
+  if(!is.null(dimy)) {
+    if(dimy[2] > 1)
+      stop("Multivariate time series detected. This function is designed for univariate time series only.")
+  }
   origy <- y
   if (!is.null(lambda)) {
     y <- BoxCox(y, lambda)
@@ -76,7 +81,7 @@ forecast.lagwalk <- function(object, h=10, level=c(80, 95), fan=FALSE, lambda=NU
 
   # Intervals
   # Adjust prediction intervals to allow for drift coefficient standard error
-  mse <- mean(object$residuals^2, na.rm=TRUE)
+  mse <- sum(object$residuals^2, na.rm = TRUE)/(sum(!is.na(object$residuals)) - (object$par$drift != 0))
   se <- sqrt(mse*steps + (steps*object$par$drift.se)^2)
 
   if(fan)
@@ -154,7 +159,6 @@ fitted.lagwalk <- function(object, ...){
   object$fitted
 }
 
-
 # Random walk
 #' @rdname naive
 #'
@@ -195,14 +199,24 @@ rwf <- function(y, h=10, drift=FALSE, level=c(80, 95), fan=FALSE, lambda=NULL, b
 #' prediction intervals from an ARIMA(0,0,0)(0,1,0)m model where m is the
 #' seasonal period.
 #'
-#' The random walk with drift model is \deqn{Y_t=c + Y_{t-1} + Z_t}{Y[t]=c +
-#' Y[t-1] + Z[t]} where \eqn{Z_t}{Z[t]} is a normal iid error. Forecasts are
-#' given by \deqn{Y_n(h)=ch+Y_n}{Y[n+h]=ch+Y[n]}. If there is no drift (as in
+#' The random walk with drift model is
+#'
+#' \deqn{Y_t=c + Y_{t-1} + Z_t}{Y[t]=c + Y[t-1] + Z[t]}
+#'
+#' where \eqn{Z_t}{Z[t]} is a normal iid error. Forecasts are
+#' given by
+#'
+#' \deqn{Y_n(h)=ch+Y_n}{Y[n+h]=ch+Y[n]}
+#'
+#' If there is no drift (as in
 #' \code{naive}), the drift parameter c=0. Forecast standard errors allow for
 #' uncertainty in estimating the drift parameter (unlike the corresponding
 #' forecasts obtained by fitting an ARIMA model directly).
 #'
-#' The seasonal naive model is \deqn{Y_t= Y_{t-m} + Z_t}{Y[t]=Y[t-m] + Z[t]}
+#' The seasonal naive model is
+#'
+#' \deqn{Y_t= Y_{t-m} + Z_t}{Y[t]=Y[t-m] + Z[t]}
+#'
 #' where \eqn{Z_t}{Z[t]} is a normal iid error.
 #'
 #' @aliases print.naive
@@ -214,7 +228,7 @@ rwf <- function(y, h=10, drift=FALSE, level=c(80, 95), fan=FALSE, lambda=NULL, b
 #' @param fan If TRUE, level is set to seq(51,99,by=3). This is suitable for
 #' fan plots.
 #' @param x Deprecated. Included for backwards compatibility.
-#' @inheritParams forecast
+#' @inheritParams forecast.ts
 #'
 #' @return An object of class "\code{forecast}".
 #'

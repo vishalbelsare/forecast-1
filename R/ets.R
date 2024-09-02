@@ -40,8 +40,8 @@
 #' The transformation is ignored if NULL. Otherwise,
 #' data transformed before model is estimated. When \code{lambda} is specified,
 #' \code{additive.only} is set to \code{TRUE}.
-#' @param lower Lower bounds for the parameters (alpha, beta, gamma, phi)
-#' @param upper Upper bounds for the parameters (alpha, beta, gamma, phi)
+#' @param lower Lower bounds for the parameters (alpha, beta, gamma, phi). Ignored if \code{bounds=="admissible"}.
+#' @param upper Upper bounds for the parameters (alpha, beta, gamma, phi). Ignored if \code{bounds=="admissible"}.
 #' @param opt.crit Optimization criterion. One of "mse" (Mean Square Error),
 #' "amse" (Average MSE over first \code{nmse} forecast horizons), "sigma"
 #' (Standard deviation of residuals), "mae" (Mean of absolute residuals), or
@@ -65,7 +65,7 @@
 #' contains NA values. By default, the largest contiguous portion of the
 #' time-series will be used.
 #' @param ... Other undocumented arguments.
-#' @inheritParams forecast
+#' @inheritParams forecast.ts
 #'
 #' @return An object of class "\code{ets}".
 #'
@@ -142,13 +142,18 @@ ets <- function(y, model="ZZZ", damped=NULL,
     stop("nmse out of range")
   }
   m <- frequency(y)
+  if(abs(m - round(m)) > 1e-4) {
+    warning("Non-integer seasonal period. Only non-seasonal models will be considered.")
+  } else {
+    m <- round(m)
+  }
 
   if (any(upper < lower)) {
     stop("Lower limits must be less than upper limits")
   }
 
   # If model is an ets object, re-fit model to new data
-  if (class(model) == "ets") {
+  if ("ets" %in% class(model)) {
     # Prevent alpha being zero (to avoid divide by zero in the C code)
     alpha <- max(model$par["alpha"], 1e-10)
     beta <- model$par["beta"]
@@ -507,7 +512,6 @@ as.character.ets <- function(x, ...) {
 #   list(lower=myLower, upper=myUpper)
 # }
 
-
 etsmodel <- function(y, errortype, trendtype, seasontype, damped,
                      alpha=NULL, beta=NULL, gamma=NULL, phi=NULL,
                      lower, upper, opt.crit, nmse, bounds, maxit=2000, control=NULL, seed=NULL, trace=FALSE) {
@@ -520,7 +524,6 @@ etsmodel <- function(y, errortype, trendtype, seasontype, damped,
   } else {
     m <- 1
   }
-
 
   # Modify limits if alpha, beta or gamma have been specified.
   if (!is.null(alpha)) {
@@ -535,7 +538,7 @@ etsmodel <- function(y, errortype, trendtype, seasontype, damped,
   }
 
   # Initialize smoothing parameters
-  par <- initparam(alpha, beta, gamma, phi, trendtype, seasontype, damped, lower, upper, m)
+  par <- initparam(alpha, beta, gamma, phi, trendtype, seasontype, damped, lower, upper, m, bounds)
   names(alpha) <- names(beta) <- names(gamma) <- names(phi) <- NULL
   par.noopt <- c(alpha = alpha, beta = beta, gamma = gamma, phi = phi)
   if (!is.null(par.noopt)) {
@@ -735,7 +738,6 @@ etsmodel <- function(y, errortype, trendtype, seasontype, damped,
   ))
 }
 
-
 etsTargetFunctionInit <- function(par, y, nstate, errortype, trendtype, seasontype, damped, par.noopt, lowerb, upperb,
                                   opt.crit, nmse, bounds, m, pnames, pnames2) {
   names(par) <- pnames
@@ -809,7 +811,6 @@ etsTargetFunctionInit <- function(par, y, nstate, errortype, trendtype, seasonty
     }
   }
 
-
   if (!damped) {
     phi <- 1
   }
@@ -844,10 +845,11 @@ etsTargetFunctionInit <- function(par, y, nstate, errortype, trendtype, seasonty
   res
 }
 
-
-
-initparam <- function(alpha, beta, gamma, phi, trendtype, seasontype, damped, lower, upper, m) {
-  if (any(lower > upper)) {
+initparam <- function(alpha, beta, gamma, phi, trendtype, seasontype, damped, lower, upper, m, bounds) {
+  if(bounds == "admissible") {
+    lower[1L:3L] <- lower[1L:3L]*0
+    upper[1L:3L] <- upper[1L:3L]*0 + 1e-3
+  } else if (any(lower > upper)) {
     stop("Inconsistent parameter boundaries")
   }
 
@@ -1014,7 +1016,6 @@ initstate <- function(y, trendtype, seasontype) {
   return(c(l0, b0, init.seas))
 }
 
-
 lik <- function(par, y, nstate, errortype, trendtype, seasontype, damped, par.noopt, lowerb, upperb,
                 opt.crit, nmse, bounds, m, pnames, pnames2) {
 
@@ -1105,7 +1106,7 @@ lik <- function(par, y, nstate, errortype, trendtype, seasontype, damped, par.no
 print.ets <- function(x, ...) {
   cat(paste(x$method, "\n\n"))
   if(!is.null(x$call)) {
-    cat(paste("Call:\n", deparse(x$call), "\n\n"))
+    cat("Call:", deparse(x$call), "", sep = "\n")
   }
   ncoef <- length(x$initstate)
   if (!is.null(x$lambda)) {
@@ -1159,7 +1160,6 @@ print.ets <- function(x, ...) {
   #    cat("\n  BIC:    ")
   #    cat(round(x$bic,4))
 }
-
 
 pegelsresid.C <- function(y, m, init.state, errortype, trendtype, seasontype, damped, alpha, beta, gamma, phi, nmse) {
   n <- length(y)
@@ -1259,7 +1259,6 @@ admissible <- function(alpha, beta, gamma, phi, m) {
 
 ### PLOT COMPONENTS
 
-
 #' Plot components from ETS model
 #'
 #' Produces a plot of the level, slope and seasonal components from an ETS
@@ -1353,6 +1352,26 @@ fitted.ets <- function(object, h=1, ...) {
 }
 
 #' @export
+hfitted.ets <- function(object, h=1, ...) {
+  n <- length(object$x)
+  out <- rep(NA_real_, n)
+  for(i in seq_len(n-h+1)) {
+    out[i+h-1] <- .C(
+      "etsforecast",
+      as.double(object$states[i, ]),
+      as.integer(object$m),
+      as.integer(switch(object$components[2], "N" = 0, "A" = 1, "M" = 2)),
+      as.integer(switch(object$components[3], "N" = 0, "A" = 1, "M" = 2)),
+      as.double(ifelse(object$components[4] == "FALSE", 1, object$par["phi"])),
+      as.integer(h),
+      as.double(numeric(h)),
+      PACKAGE = "forecast"
+    )[[7]][h]
+  }
+  out
+}
+
+#' @export
 logLik.ets <- function(object, ...) {
   structure(object$loglik, df = length(object$par) + 1, class = "logLik")
 }
@@ -1361,7 +1380,6 @@ logLik.ets <- function(object, ...) {
 nobs.ets <- function(object, ...) {
   length(object$x)
 }
-
 
 
 #' Is an object a particular model type?
